@@ -25,7 +25,6 @@ module Bosh4r
         'Content-Type' => 'text/xml; charset=utf-8',
         'Accept' => 'text/xml'
       })
-      p response
       parsed_response = REXML::Document.new(response)
       terminate = (REXML::XPath.first parsed_response, '/body').attribute('type') == 'terminate'
       throw Bosh4r::Error.new 'Check your BOSH endpoint' if terminate
