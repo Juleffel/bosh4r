@@ -60,8 +60,8 @@ module Bosh4r
       params = build_xml(:wait => @wait, :to => @host, :hold => @hold,
                          'xmpp:version' => @version, :rid => @rid += 1)
       parsed_response = send_bosh_request(@bosh_url, params)
-      sid = (REXML::XPath.first parsed_response, '/body').attribute('sid').value()
-      @sid = sid
+      sid_node = (REXML::XPath.first parsed_response, '/body').attribute('sid')
+      @sid = sid_node && sid_node.value()
     end
 
     def authenticate_session
