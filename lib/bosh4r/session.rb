@@ -101,7 +101,7 @@ module Bosh4r
           iq.session(:xmlns => 'urn:ietf:params:xml:ns:xmpp-session')
         end
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq/session'
+      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq'
     end
   end
 end
