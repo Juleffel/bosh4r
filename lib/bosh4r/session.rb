@@ -20,7 +20,7 @@ module Bosh4r
   class Session
     include Bosh4r::Utils
 
-    attr_reader :sid, :rid
+    attr_reader :sid, :rid, :jid
 
     def initialize(jabber_id, password, options = {})
       split_jabber_id = jabber_id.split('/')
