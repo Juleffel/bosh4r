@@ -39,14 +39,12 @@ module Bosh4r
       @version = options[:version] || '1.0' # BOSH protocol version
       @rid = rand(1000)
       @resource_name = resource_name.nil? ? "bosh_#{Time.now.to_i.to_s(36)}" : resource_name
-      connect
     end
 
     def connected?
       @connected
     end
 
-    protected
     def connect
       throw Bosh4r::Error.new('Failed to initiate BOSH session') unless initiate_session
       throw Bosh4r::Error.new('Failed to authenticate BOSH session') unless authenticate_session
@@ -55,8 +53,29 @@ module Bosh4r
       throw Bosh4r::Error.new('Failed to request BOSH session') unless request_session
       @connected = true
       self
+    end        
+
+    def register
+      init_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
+        body.iq(type: "get", id: "reg_#{rand(1000000)}", to: @host) do |iq|
+          iq.query xmlns: "jabber:iq:register"
+        end
+      end
+      send_bosh_request(@bosh_url, init_stanza)
+      sleep 1
+
+      sbmt_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
+        body.iq(type: "set", id: "reg_#{rand(1000000)}") do |iq|
+          iq.query(xmlns: "jabber:iq:register") do |query|
+            query.username @username
+            query.password @password
+          end
+        end
+      end
+      send_bosh_request(@bosh_url, sbmt_stanza)
     end
 
+  protected
     def initiate_session
       params = build_xml(:wait => @wait, :to => @host, :hold => @hold,
                          'xmpp:version' => @version, :rid => @rid += 1)
@@ -66,12 +85,7 @@ module Bosh4r
     end
 
     def authenticate_session
-      # Use SASL with base64 encoding
-      username = @jabber_id.split('@').first
-      # admin@imac.local
-      # admin
-      # password
-      auth_str = "#{@jabber_id}\u0000#{username}\u0000#{@password}"
+      auth_str = "#{@jabber_id}\u0000#{@username}\u0000#{@password}"
       auth_key = Base64.encode64(auth_str).gsub(/\s/, '')
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
         body.auth(auth_key, :xmlns => 'urn:ietf:params:xml:ns:xmpp-sasl', :mechanism => 'PLAIN')
@@ -103,24 +117,6 @@ module Bosh4r
         end
       end
       REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq'
-    end
-
-    def register
-      init_stanza = build_xml sid: @sid, "xmpp:version": @version, rid: @rid + 1 do |body|
-        body.iq type: "get", id: "reg_#{rand(1000000)}", to: @host do |iq|
-          iq.query xmlns: "jabber:iq:register"
-        end
-      end
-      send_bosh_request(@bosh_url, init_stanza)
-
-      sbmt_stanza = build_xml sid: @sid, "xmpp:version": @version, rid: @rid + 1 do |body|
-        body.iq type: "set", id: "reg_#{rand(1000000)}" do |iq|
-          iq.query xmlns: "jabber:iq:register" do |query|
-            query.username @username
-            query.password @password
-          end
-        end
-      end
     end
   end
 end

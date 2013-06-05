@@ -1,4 +1,4 @@
 require 'bosh4r'
 
-session = Bosh4r::Session.new('gg@localhost', 'password')
+session = Bosh4r::Session.new('foo@localhost', 'password')
 p session.sid
