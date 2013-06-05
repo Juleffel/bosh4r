@@ -30,6 +30,7 @@ module Bosh4r
       @jabber_id = bare_jabber_id
       @password = password
       @host = @jabber_id.split('@').last
+      @username = @jabber_id.split('@').first
 
       @bosh_url = options[:bosh_url] || 'http://localhost:5280/http-bind'
       @timeout = options[:timeout] || 5     # Network timeout
@@ -102,6 +103,24 @@ module Bosh4r
         end
       end
       REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq'
+    end
+
+    def register
+      init_stanza = build_xml sid: @sid, "xmpp:version": @version, rid: @rid + 1 do |body|
+        body.iq type: "get", id: "reg_#{rand(1000000)}", to: @host do |iq|
+          iq.query xmlns: "jabber:iq:register"
+        end
+      end
+      send_bosh_request(@bosh_url, init_stanza)
+
+      sbmt_stanza = build_xml sid: @sid, "xmpp:version": @version, rid: @rid + 1 do |body|
+        body.iq type: "set", id: "reg_#{rand(1000000)}" do |iq|
+          iq.query xmlns: "jabber:iq:register" do |query|
+            query.username @username
+            query.password @password
+          end
+        end
+      end
     end
   end
 end
