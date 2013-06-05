@@ -62,7 +62,6 @@ module Bosh4r
         end
       end
       send_bosh_request(@bosh_url, init_stanza)
-      sleep 1
 
       sbmt_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
         body.iq(type: "set", id: "reg_#{rand(1000000)}") do |iq|
