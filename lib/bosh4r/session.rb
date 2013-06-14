@@ -46,15 +46,15 @@ module Bosh4r
     end
 
     def connect
-      throw Bosh4r::Error.new('Failed to initiate BOSH session') unless initiate_session
-      throw Bosh4r::Error.new('Failed to authenticate BOSH session') unless authenticate_session
-      throw Bosh4r::Error.new('Failed to restart BOSH stream') unless restart_stream
-      throw Bosh4r::Error.new('Failed to bind resource') unless bind_resource
-      throw Bosh4r::Error.new('Failed to request BOSH session') unless request_session
+      throw Bosh4r::InitiateError.new('Failed to initiate BOSH session') unless initiate_session
+      throw Bosh4r::AuthenticateError.new('Failed to authenticate BOSH session') unless authenticate_session
+      throw Bosh4r::RestartError.new('Failed to restart BOSH stream') unless restart_stream
+      throw Bosh4r::BindError.new('Failed to bind resource') unless bind_resource
+      throw Bosh4r::RequestSessionError.new('Failed to request BOSH session') unless request_session
       request_carbons
       @connected = true
       self
-    end        
+    end
 
     def register
       init_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
@@ -62,7 +62,7 @@ module Bosh4r
           iq.query xmlns: "jabber:iq:register"
         end
       end
-      send_bosh_request(@bosh_url, init_stanza)
+      send_bosh_request(@bosh_url, init_stanza, @timeout)
 
       sbmt_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
         body.iq(type: "set", id: "reg_#{rand(1000000)}") do |iq|
@@ -72,14 +72,14 @@ module Bosh4r
           end
         end
       end
-      send_bosh_request(@bosh_url, sbmt_stanza)
+      send_bosh_request(@bosh_url, sbmt_stanza, @timeout)
     end
 
   protected
     def initiate_session
       params = build_xml(:wait => @wait, :to => @host, :hold => @hold,
                          'xmpp:version' => @version, :rid => @rid += 1)
-      parsed_response = send_bosh_request(@bosh_url, params)
+      parsed_response = send_bosh_request(@bosh_url, params, @timeout)
       sid_node = (REXML::XPath.first parsed_response, '/body').attribute('sid')
       @sid = sid_node && sid_node.value()
     end
@@ -90,13 +90,13 @@ module Bosh4r
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
         body.auth(auth_key, :xmlns => 'urn:ietf:params:xml:ns:xmpp-sasl', :mechanism => 'PLAIN')
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/success'
+      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/success'
     end
 
     def restart_stream
       params = build_xml(:sid => @sid, 'xmpp:restart' => true,
                          'xmpp:version' => @version, :rid => @rid += 1)
-      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/stream:features'
+      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/stream:features'
     end
 
     def bind_resource
@@ -107,7 +107,7 @@ module Bosh4r
           end
         end
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params), '//jid'
+      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '//jid'
     end
 
     def request_carbons
@@ -116,7 +116,7 @@ module Bosh4r
           iq.enable(xmlns: "urn:xmpp:carbons:2")
         end
       end
-    end    
+    end
 
     def request_session
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
@@ -124,7 +124,7 @@ module Bosh4r
           iq.session(:xmlns => 'urn:ietf:params:xml:ns:xmpp-session')
         end
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq'
+      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/iq'
     end
   end
 end
