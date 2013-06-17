@@ -21,7 +21,11 @@ module Bosh4r
 
     # Sends bosh request
     def send_bosh_request(url, params)
-      response = RestClient.post(url, params, {
+      resource = RestClient::Resource.new(url, {
+        :timeout => timeout,
+        :open_timeout => timeout
+      })
+      response = resource.post(params, {
         'Content-Type' => 'text/xml; charset=utf-8',
         'Accept' => 'text/xml'
       })
