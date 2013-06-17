@@ -20,7 +20,7 @@ module Bosh4r
     end
 
     # Sends bosh request
-    def send_bosh_request(url, params)
+    def send_bosh_request(url, params, timeout = 10)
       resource = RestClient::Resource.new(url, {
         :timeout => timeout,
         :open_timeout => timeout
