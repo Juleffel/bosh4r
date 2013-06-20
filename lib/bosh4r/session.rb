@@ -46,11 +46,11 @@ module Bosh4r
     end
 
     def connect
-      throw Bosh4r::InitiateError.new('Failed to initiate BOSH session') unless initiate_session
-      throw Bosh4r::AuthenticateError.new('Failed to authenticate BOSH session') unless authenticate_session
-      throw Bosh4r::RestartError.new('Failed to restart BOSH stream') unless restart_stream
-      throw Bosh4r::BindError.new('Failed to bind resource') unless bind_resource
-      throw Bosh4r::RequestSessionError.new('Failed to request BOSH session') unless request_session
+      raise Bosh4r::InitiateError.new('Failed to initiate BOSH session') unless initiate_session
+      raise Bosh4r::AuthenticateError.new('Failed to authenticate BOSH session') unless authenticate_session
+      raise Bosh4r::RestartError.new('Failed to restart BOSH stream') unless restart_stream
+      raise Bosh4r::BindError.new('Failed to bind resource') unless bind_resource
+      raise Bosh4r::RequestSessionError.new('Failed to request BOSH session') unless request_session
       request_carbons
       @connected = true
       self
