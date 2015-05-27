@@ -51,7 +51,6 @@ module Bosh4r
       raise Bosh4r::RestartError.new('Failed to restart BOSH stream') unless restart_stream
       raise Bosh4r::BindError.new('Failed to bind resource') unless bind_resource
       raise Bosh4r::RequestSessionError.new('Failed to request BOSH session') unless request_session
-      request_carbons
       @connected = true
       self
     end
@@ -108,14 +107,6 @@ module Bosh4r
         end
       end
       REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '//jid'
-    end
-
-    def request_carbons
-      stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
-        body.iq(xmlns: "jabber:client", type: "set", from: @jabber_id, id: "enable_#{rand(1000000)}") do |iq|
-          iq.enable(xmlns: "urn:xmpp:carbons:2")
-        end
-      end
     end
 
     def request_session
