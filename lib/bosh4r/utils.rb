@@ -20,21 +20,26 @@ module Bosh4r
     end
 
     # Sends bosh request
-    def send_bosh_request(url, params, timeout = 10)
-      resource = RestClient::Resource.new(url, {
-        :timeout => timeout,
-        :open_timeout => timeout
-      })
-      response = resource.post(params, {
-        'Content-Type' => 'text/xml; charset=utf-8',
-        'Accept' => 'text/xml'
-      })
+    def send_bosh_request(url, params)
+      resource = RestClient::Resource.new(url, rest_client_options)
+      response = resource.post(params, rest_client_headers)
       parsed_response = REXML::Document.new(response)
       terminate = (REXML::XPath.first parsed_response, '/body').attribute('type') == 'terminate'
       raise Bosh4r::Error.new 'Check your BOSH endpoint' if terminate
       parsed_response
     rescue => e
       raise Bosh4r::Error.new(e.message)
+    end
+
+    def rest_client_options
+      {}
+    end
+
+    def rest_client_headers
+      {
+          'Content-Type' => 'text/xml; charset=utf-8',
+          'Accept' => 'text/xml'
+      }
     end
   end
 end

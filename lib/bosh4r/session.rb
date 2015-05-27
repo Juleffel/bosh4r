@@ -61,7 +61,7 @@ module Bosh4r
           iq.query xmlns: "jabber:iq:register"
         end
       end
-      send_bosh_request(@bosh_url, init_stanza, @timeout)
+      send_bosh_request(@bosh_url, init_stanza)
 
       sbmt_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
         body.iq(type: "set", id: "reg_#{rand(1000000)}") do |iq|
@@ -71,14 +71,22 @@ module Bosh4r
           end
         end
       end
-      send_bosh_request(@bosh_url, sbmt_stanza, @timeout)
+      send_bosh_request(@bosh_url, sbmt_stanza)
     end
 
   protected
+
+    def rest_client_options
+      {
+        :timeout => @timeout,
+        :open_timeout => @timeout
+      }
+    end
+
     def initiate_session
       params = build_xml(:wait => @wait, :to => @host, :hold => @hold,
                          'xmpp:version' => @version, :rid => @rid += 1)
-      parsed_response = send_bosh_request(@bosh_url, params, @timeout)
+      parsed_response = send_bosh_request(@bosh_url, params)
       sid_node = (REXML::XPath.first parsed_response, '/body').attribute('sid')
       @sid = sid_node && sid_node.value()
     end
@@ -89,13 +97,13 @@ module Bosh4r
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
         body.auth(auth_key, :xmlns => 'urn:ietf:params:xml:ns:xmpp-sasl', :mechanism => 'PLAIN')
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/success'
+      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/success'
     end
 
     def restart_stream
       params = build_xml(:sid => @sid, 'xmpp:restart' => true,
                          'xmpp:version' => @version, :rid => @rid += 1)
-      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/stream:features'
+      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/stream:features'
     end
 
     def bind_resource
@@ -106,7 +114,7 @@ module Bosh4r
           end
         end
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '//jid'
+      REXML::XPath.first send_bosh_request(@bosh_url, params), '//jid'
     end
 
     def request_session
@@ -115,7 +123,7 @@ module Bosh4r
           iq.session(:xmlns => 'urn:ietf:params:xml:ns:xmpp-session')
         end
       end
-      REXML::XPath.first send_bosh_request(@bosh_url, params, @timeout), '/body/iq'
+      REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/iq'
     end
   end
 end
