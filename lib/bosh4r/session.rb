@@ -55,6 +55,14 @@ module Bosh4r
       self
     end
 
+    ##
+    # Return the full jid
+    #
+    # @return [String] node@host/resource
+    def jid
+      "#{@jabber_id}/#{@resource_name}"
+    end
+
     def register
       init_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
         body.iq(type: "get", id: "reg_#{rand(1000000)}", to: @host) do |iq|
