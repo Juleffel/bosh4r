@@ -27,8 +27,6 @@ module Bosh4r
       terminate = (REXML::XPath.first parsed_response, '/body').attribute('type') == 'terminate'
       raise Bosh4r::Error.new 'Check your BOSH endpoint' if terminate
       parsed_response
-    rescue => e
-      raise Bosh4r::Error.new(e.message)
     end
 
     def rest_client_options
