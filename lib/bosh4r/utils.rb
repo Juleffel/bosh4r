@@ -23,7 +23,9 @@ module Bosh4r
     def send_bosh_request(url, params)
       resource = RestClient::Resource.new(url, rest_client_options)
       response = resource.post(params, rest_client_headers)
+      p "Send:", resource, params
       parsed_response = REXML::Document.new(response)
+      p "Received:", parsed_response.to_s
       terminate = (REXML::XPath.first parsed_response, '/body').attribute('type') == 'terminate'
       raise Bosh4r::Error.new 'Check your BOSH endpoint' if terminate
       parsed_response

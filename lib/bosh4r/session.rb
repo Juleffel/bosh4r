@@ -23,6 +23,7 @@ module Bosh4r
     attr_reader :sid, :rid, :jabber_id
 
     def initialize(jabber_id, password, options = {})
+      p "Initializing..."
       split_jabber_id = jabber_id.split('/')
       bare_jabber_id = split_jabber_id.first
       resource_name = split_jabber_id.last if split_jabber_id.size > 1
@@ -46,6 +47,7 @@ module Bosh4r
     end
 
     def connect
+      p "Connecting..."
       raise Bosh4r::InitiateError.new('Failed to initiate BOSH session') unless initiate_session
       raise Bosh4r::AuthenticateError.new('Failed to authenticate BOSH session') unless authenticate_session
       raise Bosh4r::RestartError.new('Failed to restart BOSH stream') unless restart_stream
@@ -64,6 +66,7 @@ module Bosh4r
     end
 
     def register
+      p "Registering user..."
       init_stanza = build_xml(:sid => @sid, "xmpp:version" => @version, :rid => @rid += 1) do |body|
         body.iq(type: "get", id: "reg_#{rand(1000000)}", to: @host) do |iq|
           iq.query xmlns: "jabber:iq:register"
@@ -92,6 +95,7 @@ module Bosh4r
     end
 
     def initiate_session
+      p "Initiating session..."
       params = build_xml(:wait => @wait, :to => @host, :hold => @hold,
                          'xmpp:version' => @version, :rid => @rid += 1)
       parsed_response = send_bosh_request(@bosh_url, params)
@@ -100,6 +104,7 @@ module Bosh4r
     end
 
     def authenticate_session
+      p "Authenticating session..."
       auth_str = "#{@jabber_id}\u0000#{@username}\u0000#{@password}"
       auth_key = Base64.encode64(auth_str).gsub(/\s/, '')
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
@@ -109,12 +114,14 @@ module Bosh4r
     end
 
     def restart_stream
+      p "Restarting stream..."
       params = build_xml(:sid => @sid, 'xmpp:restart' => true,
                          'xmpp:version' => @version, :rid => @rid += 1)
       REXML::XPath.first send_bosh_request(@bosh_url, params), '/body/stream:features'
     end
 
     def bind_resource
+      p "Binding resource..."
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
         body.iq(:id => "bind_#{rand(1000000)}", :type => 'set', :xmlns => "jabber:client") do |iq|
           iq.bind(:xmlns => 'urn:ietf:params:xml:ns:xmpp-bind') do |bind|
@@ -126,6 +133,7 @@ module Bosh4r
     end
 
     def request_session
+      p "Requesting session..."
       params = build_xml(:sid => @sid, 'xmpp:version' => @version, :rid => @rid += 1) do |body|
         body.iq(:id => "session_#{rand(1000000)}", :type => 'set', :xmlns => 'jabber:client') do |iq|
           iq.session(:xmlns => 'urn:ietf:params:xml:ns:xmpp-session')
